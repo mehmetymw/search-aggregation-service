@@ -145,6 +145,7 @@ Yanıt:
 Proje case gereksinimlerini tamamen karşılıyor olsa da, gelecekte şu geliştirmelerle daha güçlü hale getirilebilir:
 
 - **Tam Metin Arama:** PostgreSQL’in full-text search özelliklerini kullanarak daha iyi arama sonuçları.
+- **Ölçeklenebilir Sync Mekanizması:** Şu anki in-memory ticker yerine, dağıtık sistemlerde sorunsuz çalışması için **CronJob** (Kubernetes) veya **Message Queue** (Kafka/RabbitMQ) tabanlı bir yapıya geçilebilir. Ancak bunun bir case study olması sebebiyle, daha basit bir yöntemle problemi çözmeye çalıştım, sync interval config.yaml dosyasında ayarlanabilir.
 - **Arayüz İyileştirmeleri:** Kullanıcı deneyimini geliştirmek için daha interaktif filtreleme ve sıralama seçenekleri, grafiklerle zengin içerik.
 - **Otomatik API Dokümantasyonu:** Swagger/OpenAPI entegrasyonu ile API’yi interaktif olarak belgelemek.
 

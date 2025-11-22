@@ -30,6 +30,9 @@ type SortOption string
 const (
 	SortScoreDesc   SortOption = "score_desc"
 	SortScoreAsc    SortOption = "score_asc"
+	SortDateDesc    SortOption = "date_desc"
+	SortDateAsc     SortOption = "date_asc"
+	// Legacy support
 	SortRecencyDesc SortOption = "recency_desc"
 )
 
@@ -154,9 +157,13 @@ func (uc *SearchContentsUseCase) sortItems(items []ContentWithScore, sortOption 
 		sort.Slice(items, func(i, j int) bool {
 			return items[i].Score.FinalScore < items[j].Score.FinalScore
 		})
-	case SortRecencyDesc:
+	case SortDateDesc, SortRecencyDesc:
 		sort.Slice(items, func(i, j int) bool {
 			return items[i].Content.PublishedAt.After(items[j].Content.PublishedAt)
+		})
+	case SortDateAsc:
+		sort.Slice(items, func(i, j int) bool {
+			return items[i].Content.PublishedAt.Before(items[j].Content.PublishedAt)
 		})
 	default:
 		sort.Slice(items, func(i, j int) bool {
