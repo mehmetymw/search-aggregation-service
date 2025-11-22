@@ -73,7 +73,7 @@ Projede **Clean Architecture** yaklaşımı kullanıldı. Bu mimariyi tercih etm
 
 Case tanımında verilen puanlama formülü birebir uygulanmıştır:
 
-\[ \text{Final Skor} = (\text{Temel Puan} \times \text{İçerik Türü Katsayısı}) + \text{Güncellik Puanı} + \text{Etkileşim Puanı} \]
+**Final Skor** = (Temel Puan x İçerik Türü Katsayısı) + Güncellik Puanı + Etkileşim Puanı
 
 - **Temel Puan**: Video için `views/1000 + likes/100`, metin için `reading_time + reactions/50`.
 - **İçerik Türü Katsayısı**: Video için 1.5, metin için 1.0.
