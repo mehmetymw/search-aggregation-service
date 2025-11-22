@@ -1,0 +1,82 @@
+syntax = "proto3";
+
+package content.v1;
+
+option go_package = "github.com/mehmetymw/search-aggregation-service/backend/proto/gen;contentpb";
+
+import "google/api/annotations.proto";
+
+service ContentService {
+  rpc SearchContents(SearchRequest) returns (SearchResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/search"
+    };
+  }
+
+  rpc GetContent(GetContentRequest) returns (GetContentResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/contents/{id}"
+    };
+  }
+
+  rpc GetMetadata(GetMetadataRequest) returns (GetMetadataResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/metadata"
+    };
+  }
+}
+
+message SearchRequest {
+  string query = 1;
+  string type = 2;
+  string sort = 3;
+  int32 page = 4;
+  int32 page_size = 5;
+}
+
+message SearchResponse {
+  repeated ContentItem items = 1;
+  int32 page = 2;
+  int32 page_size = 3;
+  int64 total = 4;
+}
+
+message GetContentRequest {
+  int64 id = 1;
+}
+
+message GetContentResponse {
+  ContentItem content = 1;
+}
+
+message GetMetadataRequest {}
+
+message GetMetadataResponse {
+  repeated ContentTypeMetadata content_types = 1;
+  repeated SortOptionMetadata sort_options = 2;
+  PaginationMetadata pagination = 3;
+}
+
+message ContentTypeMetadata {
+  string id = 1;
+  string display_name = 2;
+}
+
+message SortOptionMetadata {
+  string id = 1;
+  string display_name = 2;
+}
+
+message PaginationMetadata {
+  int32 default_page_size = 1;
+  int32 max_page_size = 2;
+}
+
+message ContentItem {
+  int64 id = 1;
+  string title = 2;
+  string content_type = 3;
+  double score = 4;
+  string published_at = 5;
+  string provider_name = 6;
+}

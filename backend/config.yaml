@@ -1,0 +1,20 @@
+server:
+  grpc_port: 9090
+  http_port: 8081
+
+database:
+  dsn: "postgres://contentuser:contentpass@postgres:5432/contentdb?sslmode=disable"
+
+redis:
+  addr: "redis:6379"
+
+sync:
+  interval_seconds: 60
+
+cache:
+  ttl_seconds: 3600
+
+pagination:
+  default_page: 1
+  default_page_size: 10
+  max_page_size: 100
