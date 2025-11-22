@@ -16,6 +16,9 @@ RUN go mod download
 # Copy source code
 COPY . .
 
+# Run tests
+RUN go test -v ./...
+
 # Build the application statically
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o bin/api ./cmd/api
 

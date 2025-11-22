@@ -97,6 +97,7 @@ export function SearchPage() {
           contentTypes={contentTypes}
           sortOptions={sortOptions}
           onSearch={handleSearch}
+          
         />
 
         {error && <div className="alert">{error}</div>}
