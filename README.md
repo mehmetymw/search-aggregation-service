@@ -86,13 +86,26 @@ Bu bileşenler `ScoringService` içinde hesaplanır ve katsayılar veritabanınd
 
 Sistem, verileri şu tablolarda saklar:
 
-- `providers`: Sağlayıcı bilgileri (isim, format, URL, limit vb.).
-- `contents`: İçerik metadata’sı (başlık, içerik türü, provider id, provider içerik id, yayın tarihi...).
-- `content_stats`: İçeriklere ait ham metrikler (views, likes, reading_time, reactions, comments, duration_sec). Skor saklanmaz.
-- `tags` & `content_tags`: Etiketlerin normalize edilmesi ve içeriklerle ilişkilendirilmesi.
-- `content_raw_payloads`: (Opsiyonel) Orijinal JSON/XML verilerini saklama.
-- `provider_sync_runs`: Sağlayıcı senkronizasyon işlemlerini ve loglarını takip etme.
-- `scoring_rules`: Puanlama algoritması katsayılarını JSON formatında saklar.
+### Tablolar
+
+| Tablo Adı                  | Açıklama                                                                                                                     |
+| :------------------------- | :--------------------------------------------------------------------------------------------------------------------------- |
+| `contents`                 | İçeriklerin temel metadata'sı (Başlık, Tür, Yayın Tarihi). `provider_id` ve `provider_content_id` ile benzersizlik sağlanır. |
+| `content_stats`            | İçeriklerin değişen metrikleri (Views, Likes, ReadingTime). `contents` tablosundan ayrılarak performans artırılmıştır.       |
+| `providers`                | Veri kaynaklarının tanımı (URL, Format, İsim).                                                                               |
+| `tags` & `content_tags`    | Etiketlerin normalize edilmiş hali ve içeriklerle olan çoka-çok ilişkisi.                                                    |
+| `scoring_rules`            | Puanlama algoritması katsayılarını JSON formatında saklar (Dynamic Configuration).                                           |
+| `provider_sync_runs`       | Senkronizasyon işleminin logları (Başlangıç, Bitiş, Durum, Hata Mesajı).                                                     |
+| `content_raw_payloads`     | Provider'dan gelen ham JSON/XML verisinin saklandığı yer (`JSONB`). Debug amaçlıdır.                                         |
+| `provider_format_metadata` | Desteklenen formatlar (json, xml) ve ayarları.                                                                               |
+| `content_type_metadata`    | Desteklenen içerik türleri (video, article) ve ayarları.                                                                     |
+
+### İndeksler ve Optimizasyonlar
+
+- **`idx_contents_title_trgm`**: `pg_trgm` eklentisi ve **GIN Index** kullanılarak metin içi (`LIKE '%query%'`) aramalar hızlandırılmıştır.
+- **`idx_contents_published`**: Tarihe göre sıralama ve filtreleme için B-Tree index.
+- **`idx_contents_type`**: İçerik türüne göre filtreleme için.
+- **`idx_content_stats_views`**: En çok izlenenleri bulmak için.
 
 Bu yapı, **kalıcı tutarlılık**, **normalize veri** ve **kolay genişletilebilirlik** sağlar. Ham veriler saklandığı için skorlama formülü değişse bile veriler yeniden işlenebilir.
 
