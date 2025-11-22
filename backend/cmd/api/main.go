@@ -24,6 +24,7 @@ import (
 	loggerPkg "github.com/mehmetymw/search-aggregation-service/backend/infrastructure/logger"
 	"github.com/mehmetymw/search-aggregation-service/backend/infrastructure/providers"
 	"github.com/mehmetymw/search-aggregation-service/backend/infrastructure/repositories"
+	"github.com/mehmetymw/search-aggregation-service/backend/infrastructure/resilience"
 	contentpb "github.com/mehmetymw/search-aggregation-service/backend/proto/gen"
 	grpcTransport "github.com/mehmetymw/search-aggregation-service/backend/transport/grpc"
 )
@@ -102,6 +103,12 @@ func main() {
 
 	jsonProviderClient := providers.NewJsonProviderClient()
 	xmlProviderClient := providers.NewXmlProviderClient()
+
+	// Wrap provider clients with Circuit Breaker
+	cbConfig := appConfig.CircuitBreaker
+	jsonProviderClientWithCB := resilience.NewCircuitBreakerProviderClient(jsonProviderClient, cbConfig)
+	xmlProviderClientWithCB := resilience.NewCircuitBreakerProviderClient(xmlProviderClient, cbConfig)
+
 	tagNormalizer := service.NewTagNormalizer()
 
 	syncUseCase := usecase.NewSyncProviderContentsUseCase(
@@ -109,8 +116,8 @@ func main() {
 		contentRepo,
 		contentStatsRepo,
 		tagRepo,
-		jsonProviderClient,
-		xmlProviderClient,
+		jsonProviderClientWithCB,
+		xmlProviderClientWithCB,
 		tagNormalizer,
 		logger,
 	)
@@ -119,7 +126,12 @@ func main() {
 
 	metadataRepo := repositories.NewMetadataRepository(database)
 
-	grpcServer := grpc.NewServer()
+	// Initialize Rate Limiter
+	rateLimitInterceptor := grpcTransport.NewRateLimitInterceptor(appConfig.RateLimit)
+
+	grpcServer := grpc.NewServer(
+		grpc.UnaryInterceptor(rateLimitInterceptor.Unary()),
+	)
 	contentServer := grpcTransport.NewContentServiceServer(
 		searchUseCase,
 		getByIDUseCase,

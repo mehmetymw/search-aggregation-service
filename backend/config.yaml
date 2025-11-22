@@ -18,3 +18,13 @@ pagination:
   default_page: 1
   default_page_size: 10
   max_page_size: 100
+
+rate_limit:
+  rps: 100
+  burst: 200
+
+circuit_breaker:
+  name: "provider-cb"
+  max_requests: 5
+  interval: 60 # seconds
+  timeout: 30 # seconds

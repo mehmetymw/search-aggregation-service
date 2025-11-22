@@ -24,6 +24,7 @@ Bu gereksinimleri karşılamak için sistem şu başlıca bileşenlerden oluşur
 | **Cache (Redis)**                | Sık yapılan arama sorgularının ve sonuçların hızla yanıtlanabilmesi için ara bellek görevi.         |
 | **Frontend (Basit Web Arayüzü)** | Kullanıcıların arama yapabilmesi ve sonuçları görüntüleyebilmesi.                                   |
 | **Docker Compose**               | Tüm bileşenlerin (backend, frontend, Postgres, Redis) tek komutla çalıştırılması.                   |
+| **Resilience**                   | **Rate Limiting** (Token Bucket) ve **Circuit Breaker** (Gobreaker) ile sistem kararlılığı.         |
 
 ## 🧱 Mimari Tasarım ve Kararlar
 
@@ -47,11 +48,13 @@ Projede **Clean Architecture** yaklaşımı kullanıldı. Bu mimariyi tercih etm
 
    - Veritabanı erişimi için **sqlc** kullanıldı. Bu araç, SQL sorgularını Go kodu içerisinde derleme zamanında doğrulayarak tip güvenliğini ve performansı sağlar.
    - Sağlayıcılardan veri çekmek için `ProviderClient` arayüzü ve JSON/XML adaptörleri. Yeni bir format eklemek için bu arayüzü implemente etmek yeterlidir.
+   - **Resilience**: `CircuitBreakerProviderClient` ile dış servis hatalarına karşı koruma sağlanır.
    - Redis cache adaptörü: Arama sonuçlarını anahtar bazlı saklamak için kullanılır.
-   - Konfigürasyon (Viper) ve logging (Zap) gibi bileşenler burada adapter’lar aracılığıyla soyutlanır.
+   - Konfigürasyon: **Viper** ile dosya/env tabanlı konfigürasyon ve **DatabaseConfigProvider** ile veritabanı tabanlı dinamik skorlama kuralları yönetilir.
 
 4. **Transport Katmanı**
    - **gRPC** sunucusu, düşük gecikme ve tip güvenliği sağlar.
+   - **Rate Limiting**: gRPC interceptor ile API istekleri sınırlandırılır (Token Bucket algoritması).
    - **gRPC-Gateway** aracılığıyla aynı servisler HTTP/JSON olarak da kullanılabilir.
    - Basit bir web arayüzü, gRPC-Gateway üzerinden API’ye istek yapar.
 
@@ -63,7 +66,8 @@ Projede **Clean Architecture** yaklaşımı kullanıldı. Bu mimariyi tercih etm
 - **sqlc**: ORM kullanmak yerine SQL sorgularını doğrudan yazıp tip güvenliği sağlamak için seçildi. Performans kaybı olmadan veritabanı işlemlerini yönetmek mümkün.
 - **Redis**: Sık sorguların ve skoru hesaplanmış sonuçların çok hızlı döndürülmesini sağlamak için bellek içi cache kullanımı.
 - **Docker Compose**: Production ortamında doğrudan kullanılmasa da bu case için tüm servisleri tek komutla ayağa kaldırmak amacıyla tercih edildi. Böylece kurulum süreci basitleşti.
-- **React (veya benzeri)**: Basit bir UI oluşturmak için kullanılan modern ve yaygın bir frontend kütüphanesi. Tasarım minimal tutuldu; daha kapsamlı bir arayüz gerektiğinde aynı altyapı genişletilebilir.
+- **React + Vite**: Hızlı ve modern bir frontend geliştirme deneyimi için React ile birlikte Vite build aracı kullanıldı. Tasarım minimal tutuldu.
+- **GitHub Actions**: Sürekli entegrasyon (CI) süreçlerini otomatize etmek için kullanıldı. Her `push` ve `pull request` işleminde birim ve entegrasyon testleri otomatik olarak çalıştırılarak kodun kararlılığı sağlanır.
 
 ## 📊 Puanlama (Scoring) Algoritması
 
@@ -76,7 +80,7 @@ Case tanımında verilen puanlama formülü birebir uygulanmıştır:
 - **Güncellik Puanı**: İçeriğin yayın tarihine göre 1 hafta içinde +5, 1 ay içinde +3, 3 ay içinde +1 veya daha eski ise 0.
 - **Etkileşim Puanı**: Video için `(likes/views) * 10` (views sıfırsa 0), metin için `(reactions/reading_time) * 5` (reading_time sıfırsa 0).
 
-Bu bileşenler `ScoringService` içinde hesaplanır ve katsayılar `ScoringConfig` üzerinden ortam değişkenleri ile yapılandırılabilir. Bu yaklaşım sayesinde formülün veya katsayıların değiştirilmesi gerektiğinde kodu değiştirmeden yapılandırma güncellenebilir.
+Bu bileşenler `ScoringService` içinde hesaplanır ve katsayılar veritabanındaki `scoring_rules` tablosundan dinamik olarak okunur. Bu sayede kod değişikliği yapmadan (deploy gerekmeden) puanlama algoritmasının ağırlıkları değiştirilebilir.
 
 ## 📦 Veri Yapısı
 
@@ -88,6 +92,7 @@ Sistem, verileri şu tablolarda saklar:
 - `tags` & `content_tags`: Etiketlerin normalize edilmesi ve içeriklerle ilişkilendirilmesi.
 - `content_raw_payloads`: (Opsiyonel) Orijinal JSON/XML verilerini saklama.
 - `provider_sync_runs`: Sağlayıcı senkronizasyon işlemlerini ve loglarını takip etme.
+- `scoring_rules`: Puanlama algoritması katsayılarını JSON formatında saklar.
 
 Bu yapı, **kalıcı tutarlılık**, **normalize veri** ve **kolay genişletilebilirlik** sağlar. Ham veriler saklandığı için skorlama formülü değişse bile veriler yeniden işlenebilir.
 
@@ -106,13 +111,13 @@ Projeyi klonladıktan sonra hızlı bir şekilde çalıştırabilirsiniz:
    ```
    Bu komut PostgreSQL, Redis, backend ve frontend servislerini ayağa kaldıracaktır.
 3. **Servisi Test Edin:**
-   - API gRPC üzerinden `localhost:50051` portunda, HTTP/JSON üzerinden `http://localhost:8081` portunda çalışır.
+   - API gRPC üzerinden `localhost:9090` portunda, HTTP/JSON üzerinden `http://localhost:8081` portunda çalışır.
    - Frontend arayüzü `http://localhost:5173` adresindedir.
 
 ### Örnek Arama İsteği
 
 ```
-GET http://localhost:8081/search?query=go%20programming&content_type=video&page=1&page_size=10
+GET http://localhost:8081/api/v1/search?query=go%20programming&type=video&page=1&page_size=10
 ```
 
 Yanıt:

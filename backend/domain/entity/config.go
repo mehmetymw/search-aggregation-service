@@ -9,6 +9,21 @@ type AppConfig struct {
 	Sync       SyncConfig       `mapstructure:"sync"`
 	Cache      CacheConfig      `mapstructure:"cache"`
 	Pagination PaginationConfig `mapstructure:"pagination"`
+	RateLimit  RateLimitConfig  `mapstructure:"rate_limit"`
+	CircuitBreaker CircuitBreakerConfig `mapstructure:"circuit_breaker"`
+}
+
+type RateLimitConfig struct {
+	RPS   int `mapstructure:"rps"`
+	Burst int `mapstructure:"burst"`
+}
+
+type CircuitBreakerConfig struct {
+	Name          string `mapstructure:"name"`
+	MaxRequests   uint32 `mapstructure:"max_requests"`
+	Interval      int    `mapstructure:"interval"`
+	Timeout       int    `mapstructure:"timeout"`
+	ReadyToTrip   bool   `mapstructure:"ready_to_trip"` // Simplified for config, logic in code
 }
 type PaginationConfig struct {
 	DefaultPage     int `mapstructure:"default_page"`
