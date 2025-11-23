@@ -139,17 +139,17 @@ Yanıt:
 {
   "items": [
     {
-      "id": "42",
+      "id": "1",
       "title": "Go Programming Tutorial",
       "content_type": "video",
-      "score": 27.3,
-      "published_at": "2024-03-15T10:00:00Z"
-    },
-    ...
+      "score": 41.3,
+      "published_at": "2024-03-15T10:00:00Z",
+      "provider_name": "provider-1"
+    }
   ],
   "page": 1,
   "page_size": 10,
-  "total": 150
+  "total": "1"
 }
 ```
 
@@ -167,3 +167,4 @@ Proje case gereksinimlerini tamamen karşılıyor olsa da, gelecekte şu gelişt
 Bu proje, verilen case çalışmasının tüm gereksinimlerini karşılamakla kalmayıp, **modüler ve ölçeklenebilir bir mimari** sunar. Kullanılan her teknoloji ve tasarım kararı, performans, esneklik ve bakım kolaylığı hedefleriyle uyumludur. Yeni provider’ların eklenmesi, puanlama formülünün değiştirilmesi veya arayüzün genişletilmesi gibi ihtiyaçlar basit dokunuşlarla gerçekleştirilebilir.
 
 Bu README, projeyi sunarken kullanabileceğiniz temel noktaları özetler. Soru ve önerileriniz olursa memnuniyetle yanıtlarım.
+
