@@ -14,9 +14,9 @@ jobs:
       postgres:
         image: postgres:15
         env:
-          POSTGRES_USER: user
-          POSTGRES_PASSWORD: password
-          POSTGRES_DB: testdb
+          POSTGRES_USER: user # for case but - should be store in secret 
+          POSTGRES_PASSWORD: password  # for case but - should be store in secret 
+          POSTGRES_DB: testdb  # for case but - should be store in secret 
         ports:
           - 5432:5432
         options: >-
@@ -52,3 +52,4 @@ jobs:
         run: |
           cd backend
           go test -v ./...
+
